@@ -17,7 +17,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Pane;
-import javafx.stage.Stage;
 
 public class MainView {
 
@@ -45,7 +44,7 @@ public class MainView {
         // Contenedor del menú lateral
         VBox menuLateral = new VBox(10, inicio, gestionCitas, subMenuCitas, historialClinico, medicosEspecialistas, paciente);
         menuLateral.setPadding(new Insets(10));
-        menuLateral.setStyle("-fx-background-color: #f4f4f4; -fx-pref-width: 250px;");
+        menuLateral.setStyle("-fx-background-color: gray; -fx-pref-width: 250px;");
 
         // Contenedor de contenido principal
         StackPane contentPane = new StackPane();
@@ -106,7 +105,7 @@ public class MainView {
 
     // Método para crear los elementos del submenú
     private Label createSubMenuItem(String text) {
-        Label label = new Label("  - " + text); // Sangría visual
+        Label label = new Label("  - " + text);
         label.setStyle("-fx-font-size: 14px; -fx-padding: 5px; -fx-cursor: hand;");
         label.setMaxWidth(Double.MAX_VALUE);
         return label;
