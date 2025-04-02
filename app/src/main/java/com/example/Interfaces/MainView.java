@@ -67,7 +67,9 @@ public class MainView {
         });
 
         // Manejar los clics en el submenú
-        agendarCita.setOnMouseClicked(e -> updateContent(contentPane, "Agendar nuevas citas"));
+        agendarCita.setOnMouseClicked(e -> {
+        ScheduleAppointmentView appointmentView = new ScheduleAppointmentView();
+        updateLayout(contentPane, appointmentView.getView()); });
         consultarCitas.setOnMouseClicked(e -> updateContent(contentPane, "Consultar citas programadas"));
         cancelarCitas.setOnMouseClicked(e -> updateContent(contentPane, "Cancelar o reprogramar citas"));
 
@@ -88,9 +90,14 @@ public class MainView {
         newLabel.setStyle("-fx-font-size: 18px;");
         contentPane.getChildren().add(newLabel);
     }
+    
+    private void updateLayout(Pane contentPane, Pane newContent) {
+        contentPane.getChildren().clear();
+        contentPane.getChildren().add(newContent);
+    }
 
     // Método para crear los elementos principales del menú
-    private Label createMenuItem(String text) {
+    private Label createMenuItem( String text) {
         Label label = new Label(text);
         label.setStyle("-fx-font-size: 16px; -fx-padding: 8px; -fx-background-color: #dddddd; -fx-cursor: hand;");
         label.setMaxWidth(Double.MAX_VALUE);
