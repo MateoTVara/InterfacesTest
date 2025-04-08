@@ -30,6 +30,9 @@ dependencies {
     //JavaFX
     implementation 'org.openjfx:javafx-controls:21'
     implementation 'org.openjfx:javafx-fxml:21'
+
+    //MySql
+    implementation 'mysql:mysql-connector-java:8.0.33'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -46,7 +49,7 @@ javafx {
 
 application {
     // Define the main class for the application.
-    mainClass = 'com.example.InterfacesTest.App'
+    mainClass = 'InterfacesTest.App'
 }
 
 tasks.named('test') {
