@@ -9,25 +9,31 @@ package Views;
  * @author Mateo Torres
  */
 
-import Entity.*;
+import VO.MedicoVo;
+import VO.PacienteVo;
 import DAO.*;
+import Entity.CitasMedPacEntity;
 import javafx.collections.*;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import java.time.LocalTime;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.*;
-import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.util.StringConverter;
 import javafx.collections.transformation.FilteredList;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 
 
 public class ScheduleAppointmentView {
+    
+    private ComboBox<PacienteVo> pacienteComboBox;
+    private ComboBox<MedicoVo> medicoComboBox;
+    private DatePicker fechaPicker;
+    private ComboBox<String> horaComboBox;
+    private TextField estadoField;
+    private TextField pacienteFilterField;
+    private TextField medicoFilterField;
+    private TableView<CitasMedPacEntity> citasTableView;
+
     public Pane getView() {
         VBox layout = new VBox(10);
         layout.setPadding(new Insets(10));
@@ -39,125 +45,180 @@ public class ScheduleAppointmentView {
         formLayout.setHgap(10);
         formLayout.setVgap(10);
         formLayout.setPrefWrapLength(400);
-        
-        // Selector de paciente (with filtered list)
+
+        setupPacienteSelector(formLayout);
+        setupMedicoSelector(formLayout);
+        setupFechaHoraEstado(formLayout);
+        setupRegistrarButton(formLayout);
+
+        layout.getChildren().addAll(titleLabel, formLayout, getGridView());
+        return layout;
+    }
+
+    private void setupPacienteSelector(Pane layout) {
         Label pacienteLabel = new Label("Paciente:");
-        ComboBox<PacienteVo> pacienteComboBox = new ComboBox<>();
+        pacienteComboBox = new ComboBox<>();
         ObservableList<PacienteVo> pacientes = FXCollections.observableArrayList(PacientesDao.getPacientes());
         FilteredList<PacienteVo> filteredPacientes = new FilteredList<>(pacientes, p -> true);
-
         pacienteComboBox.setItems(filteredPacientes);
         pacienteComboBox.setConverter(new StringConverter<PacienteVo>() {
             @Override
             public String toString(PacienteVo paciente) {
                 return paciente != null ? paciente.getNombrepaciente() : "";
             }
-
             @Override
             public PacienteVo fromString(String string) {
                 return null;
             }
         });
 
-        TextField pacienteFilterField = new TextField();
+        pacienteFilterField = new TextField();
         pacienteFilterField.setPromptText("Buscar paciente...");
-        pacienteFilterField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredPacientes.setPredicate(paciente -> {
-                if (newValue == null || newValue.isEmpty()) {
-                    return true;
-                }
-                return paciente.getNombrepaciente().toLowerCase().contains(newValue.toLowerCase());
-            });
+        pacienteFilterField.textProperty().addListener((obs, oldVal, newVal) -> {
+            filteredPacientes.setPredicate(p -> 
+                newVal == null || newVal.isEmpty() || p.getNombrepaciente().toLowerCase().contains(newVal.toLowerCase()));
+                pacienteComboBox.show();
         });
 
-        // Selector de medico (with filtered list)
-        Label medicoLabel = new Label("Médico:");
-        ComboBox<MedicoVo> medicoComboBox = new ComboBox<>();
-        ObservableList<MedicoVo> medicos = FXCollections.observableArrayList(MedicosDao.getMedicos());
-        FilteredList<MedicoVo> filteredMedicos = new FilteredList<>(medicos, p -> true);
+        layout.getChildren().addAll(pacienteLabel, pacienteFilterField, pacienteComboBox);
+    }
 
+    private void setupMedicoSelector(Pane layout) {
+        Label medicoLabel = new Label("Médico:");
+        medicoComboBox = new ComboBox<>();
+        ObservableList<MedicoVo> medicos = FXCollections.observableArrayList(MedicosDao.getMedicos());
+        FilteredList<MedicoVo> filteredMedicos = new FilteredList<>(medicos, m -> true);
         medicoComboBox.setItems(filteredMedicos);
         medicoComboBox.setConverter(new StringConverter<MedicoVo>() {
             @Override
             public String toString(MedicoVo medico) {
                 return medico != null ? medico.getNombremedico() : "";
             }
-
             @Override
             public MedicoVo fromString(String string) {
                 return null;
             }
         });
 
-        TextField medicoFilterField = new TextField();
+        medicoFilterField = new TextField();
         medicoFilterField.setPromptText("Buscar médico...");
-        medicoFilterField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredMedicos.setPredicate(medico -> {
-                if (newValue == null || newValue.isEmpty()) {
-                    return true;
-                }
-                return medico.getNombremedico().toLowerCase().contains(newValue.toLowerCase());
-            });
+        medicoFilterField.textProperty().addListener((obs, oldVal, newVal) -> {
+            filteredMedicos.setPredicate(m -> 
+                newVal == null || newVal.isEmpty() || m.getNombremedico().toLowerCase().contains(newVal.toLowerCase()));
+                medicoComboBox.show();
         });
-        
-        // Selector de fecha
-        Label fechaLabel = new Label("Fecha:");
-        DatePicker fechaPicker = new DatePicker();
 
-        // Selector de hora con rangos predefinidos
+        layout.getChildren().addAll(medicoLabel, medicoFilterField, medicoComboBox);
+    }
+
+    private void setupFechaHoraEstado(Pane layout) {
+        // Fecha
+        Label fechaLabel = new Label("Fecha:");
+        fechaPicker = new DatePicker();
+
+        // Hora
         Label horaLabel = new Label("Hora:");
-        ComboBox<String> horaComboBox = new ComboBox<>();
+        horaComboBox = new ComboBox<>();
         horaComboBox.setItems(FXCollections.observableArrayList(
-            IntStream.range(8, 19) // Horas de 08:00 a 18:00
+            IntStream.range(8, 19)
                 .mapToObj(h -> LocalTime.of(h, 0))
-                .flatMap(t -> IntStream.of(0, 30).mapToObj(m -> t.plusMinutes(m)))
+                .flatMap(t -> IntStream.of(0, 30).mapToObj(t::plusMinutes))
                 .map(LocalTime::toString)
                 .collect(Collectors.toList())
         ));
 
-        // Estado de la cita
+        // Estado
         Label estadoLabel = new Label("Estado:");
-        TextField estadoField = new TextField();
-    
-        // Botón para registrar la cita
-        Button registrarBtn = new Button("Registrar Cita");
-        registrarBtn.setOnAction(e -> {
-            PacienteVo pacienteSeleccionado = pacienteComboBox.getValue();
-            MedicoVo medicoSeleccionado = medicoComboBox.getValue();
-            String fecha = (fechaPicker.getValue() != null) ? fechaPicker.getValue().toString() : "";
-            String hora = horaComboBox.getValue();
-            String estado = estadoField.getText();
+        estadoField = new TextField();
+        estadoField.editableProperty().set(false);
+        estadoField.setText("Pendiente");
 
-            if (pacienteSeleccionado == null || medicoSeleccionado == null || fecha.isEmpty() || hora == null || estado.isEmpty()) {
-                mostrarAlerta("❌ Todos los campos son obligatorios.");
-                return;
-            }
-
-            int dni = pacienteSeleccionado.getDni(); // Suponiendo que PacienteVo tiene getDni()
-            int idMedico = medicoSeleccionado.getIdmedico();
-
-            boolean registrado = CitaDao.registrarCita(dni, idMedico, fecha, hora, estado);
-            if (registrado) {
-                mostrarAlerta("✅ Cita registrada exitosamente.");
-            } else {
-                mostrarAlerta("❌ Error al registrar la cita.");
-            }
-        });
-
-
-        formLayout.getChildren().addAll(pacienteLabel, pacienteComboBox, 
-                                        medicoLabel, medicoComboBox, fechaLabel, fechaPicker,
-                                        horaLabel, horaComboBox, estadoLabel, estadoField,
-                                        registrarBtn);
-
-        layout.getChildren().addAll(titleLabel, formLayout);
-
-        return layout;
+        layout.getChildren().addAll(fechaLabel, fechaPicker, horaLabel, horaComboBox, estadoLabel, estadoField);
     }
-    
+
+    private void setupRegistrarButton(Pane layout) {
+        Button registrarBtn = new Button("Registrar Cita");
+        registrarBtn.setOnAction(e -> registrarCita());
+        layout.getChildren().add(registrarBtn);
+    }
+
+    private void registrarCita() {
+        PacienteVo paciente = pacienteComboBox.getValue();
+        MedicoVo medico = medicoComboBox.getValue();
+        String fecha = (fechaPicker.getValue() != null) ? fechaPicker.getValue().toString() : "";
+        String hora = horaComboBox.getValue();
+        String estado = estadoField.getText();
+
+        if (paciente == null || medico == null || fecha.isEmpty() || hora == null || estado.isEmpty()) {
+            mostrarAlerta("❌ Todos los campos son obligatorios.");
+            return;
+        }
+
+        boolean registrado = CitaDao.registrarCita(
+            paciente.getDni(),
+            medico.getIdmedico(),
+            fecha,
+            hora,
+            estado
+        );
+
+        if (registrado) {
+            mostrarAlerta("✅ Cita registrada exitosamente.");
+            actualizarTablaCitas(); // 👈 Aquí actualizas el grid
+        } else {
+            mostrarAlerta("❌ Error al registrar la cita.");
+        }
+
+    }
+
     private void mostrarAlerta(String mensaje) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setContentText(mensaje);
         alert.showAndWait();
     }
+    
+    public Pane getGridView() {
+        VBox layout = new VBox(10);
+        layout.setPadding(new javafx.geometry.Insets(10));
+        
+        citasTableView = new TableView<>();
+
+        TableColumn<CitasMedPacEntity, String> pacienteCol = new TableColumn<>("Paciente");
+        pacienteCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNombrepaciente()));
+
+        TableColumn<CitasMedPacEntity, Integer> edadCol = new TableColumn<>("Edad");
+        edadCol.setCellValueFactory(data -> new javafx.beans.property.SimpleIntegerProperty(data.getValue().getEdad()).asObject());
+
+        TableColumn<CitasMedPacEntity, String> medicoCol = new TableColumn<>("Médico");
+        medicoCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNombremedico()));
+
+        TableColumn<CitasMedPacEntity, String> especialidadCol = new TableColumn<>("Especialidad");
+        especialidadCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getEspecialidad()));
+
+        TableColumn<CitasMedPacEntity, String> fechaCol = new TableColumn<>("Fecha");
+        fechaCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getFecha()));
+
+        TableColumn<CitasMedPacEntity, String> horaCol = new TableColumn<>("Hora");
+        horaCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getHora()));
+
+        TableColumn<CitasMedPacEntity, String> estadoCol = new TableColumn<>("Estado");
+        estadoCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getEstado()));
+
+        citasTableView.getColumns().addAll(pacienteCol, edadCol, medicoCol, especialidadCol, fechaCol, horaCol, estadoCol);
+
+        // Placeholder data - replace with real data from your DAO
+        ObservableList<CitasMedPacEntity> citasData = FXCollections.observableArrayList(CitasMedPacDao.getList());
+
+        citasTableView.setItems(citasData);
+        citasTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        layout.getChildren().addAll(new Label("📋 Lista de Citas"), citasTableView);
+        return layout;
+    }
+    
+    private void actualizarTablaCitas() {
+        ObservableList<CitasMedPacEntity> nuevasCitas = FXCollections.observableArrayList(CitasMedPacDao.getList());
+        citasTableView.setItems(nuevasCitas);
+    }
+
 }

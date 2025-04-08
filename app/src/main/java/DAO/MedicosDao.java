@@ -1,4 +1,4 @@
-/*
+ /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
@@ -9,7 +9,7 @@ package DAO;
  * @author Mateo Torres
  */
 
-import Entity.MedicoVo;
+import VO.MedicoVo;
 import Db.DBConnection;
 import static Db.DBConnection.getConnection;
 import javafx.collections.FXCollections;

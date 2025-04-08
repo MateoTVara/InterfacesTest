@@ -9,7 +9,7 @@ package DAO;
  * @author Mateo Torres
  */
 
-import Entity.PacienteVo;
+import VO.PacienteVo;
 import Db.DBConnection;
 import static Db.DBConnection.getConnection;
 import javafx.collections.*;
